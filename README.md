@@ -1,11 +1,11 @@
 # Cabledrum detection
 
 ## Скачивание
-git clone https://github.com/dr1nkz/cabledrum_detection/ \
+git clone https://github.com/dr1nkz/cabledrum_detection.git \
 или же скачать **<> Code** -> **Download ZIP**
 
 ## Запуск
-Открыть **detection.ipynb** и запустить выполнение с 1й ячейки
+Открыть **detection.ipynb** и запустить выполнение с 1й ячейки \
 При необходимости установить отсутствующие библиотеки
 
 #### Версия CUDA
