@@ -1,0 +1,7 @@
+opencv-python
+numpy
+onnx
+onnxruntime
+onnxruntime-gpu
+flask
+Pillow
