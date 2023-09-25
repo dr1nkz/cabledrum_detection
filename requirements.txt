@@ -1,7 +1,8 @@
 opencv-python
 numpy
-onnx
-onnxruntime
+torch
 onnxruntime-gpu
 flask
 Pillow
+localStoragePy
+

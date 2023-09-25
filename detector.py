@@ -1,6 +1,7 @@
 import time
 import cv2
 import numpy as np
+import torch
 import onnxruntime
 
 
@@ -206,11 +207,12 @@ def onnx_detect_image(image_path):
                              iou_thres=0.5)
 
     img = cv2.imread(image_path)
-
+    if img is None:
+        return
     yolov8_detector(img)
     detected_img = yolov8_detector.draw_detections(img)
 
-    return detected_img
+    return cv2.cvtColor(detected_img, cv2.COLOR_BGR2RGB)
     # cv2.namedWindow("Output", cv2.WINDOW_NORMAL)
     # cv2.imshow("Output", detected_img)
     # cv2.waitKey(0)
@@ -277,7 +279,6 @@ def onnx_detect_empty_place(address):
     free_space_frames = 0
     # Пустые места
     free_space_boxes = None
-
     while cap.isOpened():
 
         # Кадр с камеры
@@ -349,7 +350,7 @@ def onnx_detect_empty_place(address):
                 cv2.putText(detected_img, f"Empty place", (x1, y1 - 4 * thickness),
                             font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
 
-        self.detected_img = detected_img
+        
         # CV2 visual output
     #     cv2.imshow("Detected Objects", detected_img)
 
