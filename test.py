@@ -51,11 +51,24 @@ def gen(address):
     # cv2.namedWindow("Detected Objects", cv2.WINDOW_NORMAL)
 
     # Местоположение парковочных мест
-    parked_drums_boxes = None
+    txt = './temp.txt'
+    lines = None
+    with open(txt) as f:
+        lines = f.readlines()
+    bboxes = []
+    for line in lines:
+        line = line.replace('\n', '')
+        line = line.split()
+        bbox = [float(l) for l in line]
+        bboxes.append(bbox)
+    parked_drums_boxes = np.array(bboxes)
+
     # Сколько кадров подряд с пустым местом мы уже видели
     free_space_frames = 0
     # Пустые места
     free_space_boxes = None
+
+    first_entry = True
     while cap.isOpened():
 
         # Кадр с камеры
@@ -67,18 +80,21 @@ def gen(address):
         # Детектирование
         yolov8_detector(frame)
         detected_img = yolov8_detector.draw_detections(frame)
+        drums_boxes = yolov8_detector.get_boxes()
 
-        if parked_drums_boxes is None:
-            parked_drums_boxes = yolov8_detector.get_boxes()
+        if parked_drums_boxes.shape[0] == 0:
+            parked_drums_boxes = np.append(
+                parked_drums_boxes, drums_boxes, axis=0)
         else:
             # Если новая катушка >
             # Если катушка только попала в кадр =
-            if len(yolov8_detector.get_boxes()) >= len(parked_drums_boxes):
-                parked_drums_boxes = yolov8_detector.get_boxes()
+            if len(drums_boxes) >= len(parked_drums_boxes):
+                parked_drums_boxes = np.append(
+                    parked_drums_boxes, drums_boxes, axis=0)
+                print(parked_drums_boxes)
 
             all_spaces_free = False
 
-            drums_boxes = yolov8_detector.get_boxes()
             # Если ни одна катушка не найдена, то только нарисовать пустые места
             if (drums_boxes is None) or (len(drums_boxes) == 0):
                 if free_space_boxes is None:
@@ -127,6 +143,8 @@ def gen(address):
                 cv2.putText(detected_img, f"Empty place", (x1, y1 - 4 * thickness),
                             font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
 
+        if first_entry is True:
+            first_entry = False
         # img = onnx_detect_image('./image.jpg')
         if detected_img is None:
             continue
@@ -136,6 +154,10 @@ def gen(address):
         rgb_image.save(buf, 'JPEG')
         frame = buf.getbuffer()
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
+
+    with open(txt, 'w') as f:
+        for parked_drums_box in parked_drums_boxes:
+            f.write(str(parked_drums_box) + '\n')
 
 
 @app.route('/video_feed/')
@@ -149,4 +171,4 @@ def video_feed():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)
