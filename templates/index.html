@@ -1,11 +1,18 @@
 <html>
   <head>
     <title>Test</title>
+    <style>
+      .fig {
+       text-align: center; /* Выравнивание по центру */ 
+      }
+    </style>
   </head>
   <body>
-    <h1>Cabledrum empty place detection</h1>
+    <h1 class="fig">Cabledrum empty place detection</h1>
     <!-- <label for="name">Type rtsp address:</label>
     <input type="text" id="name" name="name" required size="25" /> -->
-    <img src="{{ url_for('video_feed') }}">
+    <p class="fig">
+      <img src="{{ url_for('video_feed') }}">
+    </p>    
   </body>
 </html>
