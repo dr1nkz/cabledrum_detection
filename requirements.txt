@@ -5,4 +5,3 @@ onnxruntime-gpu
 flask
 Pillow
 localStoragePy
-

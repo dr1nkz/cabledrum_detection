@@ -63,6 +63,19 @@ def gen(address):
         bboxes.append(bbox)
     parked_drums_boxes = np.array(bboxes)
 
+    txt = './temp_visual.txt'
+    lines = None
+    with open('./temp_visual.txt') as f:
+        lines = f.readlines()
+    bboxes = []
+    for line in lines:
+        line = line.replace('\n', '')
+        line = line.split(', ')
+        bbox = [float(l) for l in line]
+        bbox = np.array(bbox).reshape((-1, 4, 2)).astype('int')
+        bboxes.append(bbox)
+    parked_drums_boxes_visual = np.array(bboxes)
+
     # Сколько кадров подряд с пустым местом мы уже видели
     free_space_frames = 0
 
@@ -78,56 +91,66 @@ def gen(address):
         yolov8_detector(frame)
         detected_img = frame
         # detected_img = yolov8_detector.draw_detections(frame)
-        drums_boxes = yolov8_detector.get_boxes()
+        drums_boxes = np.array(yolov8_detector.get_boxes())
 
         # чтобы не ломалось iou
-        if drums_boxes.shape[0] == 1:
+        if len(drums_boxes) == 1 or drums_boxes.shape[0] == 1:
             # drums_boxes = np.array([drums_boxes])
             drums_boxes = np.array(drums_boxes).reshape(1, -1)
 
         # list с координатами пустых мест
         free_space_boxes = []
+        free_space_boxes_visual = []
         # free_space = len(parked_drums_boxes) * [False]
-
-        for i in range(len(parked_drums_boxes)):
-            IoUs = compute_iou(parked_drums_boxes[i], drums_boxes)
-            max_IoU = np.max(IoUs)
-            if max_IoU < 0.15:
-                # Отмечаем, что мы нашли как минимум оно свободное место.
-                # free_space[i] = True
-                free_space_boxes.append(
-                    parked_drums_boxes[i].astype('int'))
+        if drums_boxes.shape[0] != 0:
+            for i in range(len(parked_drums_boxes)):
+                IoUs = compute_iou(parked_drums_boxes[i], drums_boxes)
+                max_IoU = np.max(IoUs)
+                # Для отладки параметра IoU
+                # print(parked_drums_boxes[i])
+                # print(max_IoU)
+                if max_IoU < 0.35:
+                    # Отмечаем, что мы нашли как минимум оно свободное место.
+                    # free_space[i] = True
+                    free_space_boxes.append(
+                        parked_drums_boxes[i].astype('int'))
+                    free_space_boxes_visual.append(
+                        parked_drums_boxes_visual[i].astype('int'))
+        else:
+            free_space_boxes = parked_drums_boxes.astype('int')
+            free_space_boxes_visual = parked_drums_boxes_visual.astype('int')
 
         # Штриховые рамки вокруг всех парковочных мест.
-        for parked_drums_box in parked_drums_boxes:
+        for parked_drums_box, parked_drums_box_visual in zip(parked_drums_boxes, parked_drums_boxes_visual):
             x1, y1, x2, y2 = parked_drums_box.astype('int')
-            # print(parked_drums_box)
-            # Штриховая рамка
 
-            cv2.rectangle(detected_img, (x1, y1), (x2, y2),
-                          (127, 127, 127), thickness=2, lineType=cv2.LINE_8)
+            # Штриховая рамка прямоугольника
+            # cv2.rectangle(detected_img, (x1, y1), (x2, y2),
+            #               (150, 150, 150), thickness=1)
+
+            # Штриховая рамка места под катушкой
+            cv2.polylines(detected_img, parked_drums_box_visual,
+                          True, (100, 100, 100), thickness=2)
 
         # Зелёные рамки вокруг пустых мест.
-        for free_space_box in free_space_boxes:
-            x1, y1, x2, y2 = free_space_box
+        for free_space_box, free_space_box_visual in zip(free_space_boxes, free_space_boxes_visual):
+            x1, y1, x2, y2 = free_space_box.astype('int')
 
-            # Зелёная рамка
-            cv2.rectangle(detected_img, (x1, y1), (x2, y2),
-                          (0, 255, 0), thickness=2)
+            # Зелёная рамка прямоугольника
+            # cv2.rectangle(detected_img, (x1, y1), (x2, y2),
+            #               (0, 255, 0), thickness=1)
 
             # Отображаем надпись Empty place
-            # font
-            font = cv2.FONT_HERSHEY_SIMPLEX
+            # fontScale = 1
+            # thickness = 1
+            # font = cv2.FONT_HERSHEY_DUPLEX
 
-            # fontScale
-            fontScale = 1
+            # cv2.putText(detected_img, f"Empty place", (x1, y1 - 4 * thickness),
+            #             font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
 
-            # Line thickness of 2 px
-            thickness = 1
-
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(detected_img, f"Empty place", (x1, y1 - 4 * thickness),
-                        font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
+            # Зелёная рамка места под катушкой
+            cv2.polylines(detected_img, free_space_box_visual,
+                          True, (0, 255, 0), thickness=2)
 
         if detected_img is None:
             continue
