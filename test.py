@@ -57,22 +57,21 @@ def gen(address):
         lines = f.readlines()
     bboxes = []
     for line in lines:
-        line = line.replace('\n', '')
-        line = line.split(', ')
-        bbox = [float(l) for l in line]
+        line = line.replace('\n', '').split(', ')
+        bbox = [int(l) for l in line]
         bboxes.append(bbox)
     parked_drums_boxes = np.array(bboxes)
 
     txt = './temp_visual.txt'
-    lines = None
-    with open('./temp_visual.txt') as f:
+    with open(txt) as f:
         lines = f.readlines()
     bboxes = []
+    parked_numbers = np.array([])
     for line in lines:
-        line = line.replace('\n', '')
-        line = line.split(', ')
-        bbox = [float(l) for l in line]
-        bbox = np.array(bbox).reshape((-1, 4, 2)).astype('int')
+        line = line.replace('\n', '').split(', ')
+        parked_numbers = np.append(parked_numbers, line.pop())
+        bbox = [int(l) for l in line]
+        bbox = np.array(bbox).reshape((-1, 4, 2))
         bboxes.append(bbox)
     parked_drums_boxes_visual = np.array(bboxes)
 
@@ -101,6 +100,7 @@ def gen(address):
         # list с координатами пустых мест
         free_space_boxes = []
         free_space_boxes_visual = []
+        free_parked_numbers = []
         # free_space = len(parked_drums_boxes) * [False]
         if drums_boxes.shape[0] != 0:
             for i in range(len(parked_drums_boxes)):
@@ -116,6 +116,8 @@ def gen(address):
                         parked_drums_boxes[i].astype('int'))
                     free_space_boxes_visual.append(
                         parked_drums_boxes_visual[i].astype('int'))
+                    free_parked_numbers.append(parked_numbers[i])
+
         else:
             free_space_boxes = parked_drums_boxes.astype('int')
             free_space_boxes_visual = parked_drums_boxes_visual.astype('int')
@@ -133,7 +135,8 @@ def gen(address):
                           True, (100, 100, 100), thickness=2)
 
         # Зелёные рамки вокруг пустых мест.
-        for free_space_box, free_space_box_visual in zip(free_space_boxes, free_space_boxes_visual):
+        for free_space_box, free_space_box_visual, free_parked_number in zip(
+                free_space_boxes, free_space_boxes_visual, free_parked_numbers):
             x1, y1, x2, y2 = free_space_box.astype('int')
 
             # Зелёная рамка прямоугольника
@@ -141,9 +144,9 @@ def gen(address):
             #               (0, 255, 0), thickness=1)
 
             # Отображаем надпись Empty place
-            # fontScale = 1
-            # thickness = 1
-            # font = cv2.FONT_HERSHEY_DUPLEX
+            fontScale = 1
+            thickness = 1
+            font = cv2.FONT_HERSHEY_DUPLEX
 
             # cv2.putText(detected_img, f"Empty place", (x1, y1 - 4 * thickness),
             #             font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
@@ -151,6 +154,11 @@ def gen(address):
             # Зелёная рамка места под катушкой
             cv2.polylines(detected_img, free_space_box_visual,
                           True, (0, 255, 0), thickness=2)
+
+            x, y = free_space_box_visual[0][0][0], free_space_box_visual[0][0][1]
+            # Отображаем номер парковочного места
+            cv2.putText(detected_img, free_parked_number, (x, y - 10 * thickness),
+                        font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
 
         if detected_img is None:
             continue
