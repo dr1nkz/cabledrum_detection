@@ -200,7 +200,7 @@ def onnx_detect_image(image_path):
     Запуск модели
     """
     # model_path = r'train4\weights\best.onnx'
-    model_path = r'./train5/weights/best.onnx'
+    model_path = r'./train6/weights/best.onnx'
 
     yolov8_detector = YOLOv8(path=model_path,
                              conf_thres=0.3,
@@ -350,7 +350,6 @@ def onnx_detect_empty_place(address):
                 cv2.putText(detected_img, f"Empty place", (x1, y1 - 4 * thickness),
                             font, fontScale, (0, 255, 0), thickness, cv2.LINE_AA)
 
-        
         # CV2 visual output
     #     cv2.imshow("Detected Objects", detected_img)
 

@@ -43,7 +43,7 @@ def gen(address):
     # cap = cv2.VideoCapture('./image.jpg')
     cap = cv2.VideoCapture(address)
 
-    model_path = r'./train5/weights/best.onnx'
+    model_path = r'./train6/weights/best.onnx'
     yolov8_detector = YOLOv8(path=model_path,
                              conf_thres=0.3,
                              iou_thres=0.5)
@@ -102,6 +102,7 @@ def gen(address):
         free_space_boxes_visual = []
         free_parked_numbers = []
         # free_space = len(parked_drums_boxes) * [False]
+
         if drums_boxes.shape[0] != 0:
             for i in range(len(parked_drums_boxes)):
                 IoUs = compute_iou(parked_drums_boxes[i], drums_boxes)
